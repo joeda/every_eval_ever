@@ -93,8 +93,10 @@ def extract_generation_config(run_specs: List[str]) -> Dict[str, Any]:
 
     # Collapse values if they are identical
     for key, values in list(generation_config.items()):
-        if len(set(values)) == 1:
-            generation_config[key] = values[0]
+        if isinstance(values, list) and len(set(values)) == 1:
+            values = values[0]
+
+        generation_config[key] = json.dumps(values)
 
     return dict(generation_config)
 
@@ -206,7 +208,7 @@ def convert(
                 if metric_name:
                     evaluation_description = f'{metric_name} on {dataset_name}'
                 else:
-                    evaluation_description = header.get("description")
+                    evaluation_description = header.get("description", "")
 
                 if is_new_metric:
                     metric_config = MetricConfig(
@@ -240,12 +242,14 @@ def convert(
                         source_data=source_data,
                         metric_config=metric_config,
                         score_details=ScoreDetails(
-                            score=round(cell.get("value"), 3)
-                            if cell.get("value") is not None
-                            else -1,
+                            score=(
+                                round(cell.get("value"), 3)
+                                if cell.get("value") is not None
+                                else -1
+                            ),
                             details={
-                                "description": cell.get("description"),
-                                "tab": tab_name,
+                                "description": str(cell.get("description", "")),
+                                "tab": str(tab_name),
                             },
                         ),
                         generation_config=GenerationConfig(
@@ -289,7 +293,7 @@ def convert(
                 organization_name="crfm",
                 evaluator_relationship=EvaluatorRelationship.third_party,
             ),
-            eval_library=EvalLibrary(name="unknown", version="unknown"),
+            eval_library=EvalLibrary(name="helm", version="unknown"),
             model_info=model_info,
             evaluation_results=list(results_by_metric.values()),
         )
