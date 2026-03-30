@@ -299,6 +299,60 @@ def test_convert_model_path_to_standarized_model_ids():
         model_info = extract_model_info_from_model_path(model_path)
         assert model_info.id == model_id
 
+_INSPECT_SHORTENED_EXPECTATIONS = {
+    "DS-1000.json":                   ("DS-1000",                                   "accuracy",                                       0.0),
+    "browse-comp.json":               ("a8e48c63e8a0202fcbde685141796329",           "inspect_evals/browse_comp_accuracy",              0.005529225908372828),
+    "chembench.json":                 ("ChemBench",                                  "analytical_chemistry",                           0.2565789473684211),
+    "class-eval.json":                ("ClassEval",                                  "mean",                                           0.82),
+    "commonsense-qa.json":            ("commonsense_qa",                             "accuracy",                                       0.8),
+    "compute-eval.json":              ("compute-eval",                               "accuracy",                                       0.6),
+    "cybermetric-10000.json":         ("CyberMetric-10000",                          "accuracy",                                       1.0),
+    "drop.json":                      ("drop",                                       "mean",                                           0.7846345044572627),
+    "gaia.json":                      ("GAIA",                                       "accuracy",                                       0.0),
+    "gpqa-diamond.json":              ("gpqa_diamond_74187e36ccadd6a06b1d98d13e064fed", "accuracy",                                    0.5),
+    "gsm8k.json":                     ("gsm8k",                                      "accuracy",                                       1.0),
+    "hellaswag.json":                 ("hellaswag",                                  "accuracy",                                       1.0),
+    "humaneval.json":                 ("openai_humaneval",                           "accuracy",                                       0.8),
+    "ifeval.json":                    ("IFEval",                                     "prompt_strict_acc",                              0.7208872458410351),
+    "ifevalcode.json":                ("IfEvalCode-testset",                         "inspect_evals/overall_accuracy",                 0.043209876543209874),
+    "lab-bench-cloning-scenarios.json": ("lab-bench",                               "accuracy",                                       0.15151515151515152),
+    "lab-bench-dbqa.json":            ("lab-bench",                                  "accuracy",                                       0.026923076923076925),
+    "lab-bench-litqa.json":           ("lab-bench",                                  "accuracy",                                       0.1457286432160804),
+    "lab-bench-protocolqa.json":      ("lab-bench",                                  "accuracy",                                       0.28703703703703703),
+    "lab-bench-seqqa.json":           ("lab-bench",                                  "accuracy",                                       0.3333333333333333),
+    "lab-bench-suppqa.json":          ("lab-bench",                                  "accuracy",                                       0.036585365853658534),
+    "lingoly-too.json":               ("LingOly-TOO",                                "inspect_evals/obfuscated_mean",                  0.06243145821552145),
+    "lingoly.json":                   ("lingoly",                                    "inspect_evals/no_context_delta",                 0.0794351279788173),
+    "livecodebench-pro.json":         ("livecodebench_pro",                          "accuracy",                                       0.0),
+    "math.json":                      ("MATH-lighteval",                             "accuracy",                                       0.2),
+    "mbpp.json":                      ("mbpp",                                       "accuracy",                                       1.0),
+    "medqa.json":                     ("med_qa",                                     "accuracy",                                       0.4),
+    "mind2web-sc.json":               ("mind2web_sc",                               "accuracy",                                       0.6),
+    "mind2web.json":                  ("Multimodal-Mind2Web",                        "inspect_evals/element_accuracy",                 0.3896551724137931),
+    "mmlu-0-shot.json":               ("mmlu",                                       "accuracy",                                       0.8),
+    "mmlu-pro.json":                  ("MMLU-Pro",                                   "accuracy",                                       0.6),
+    "musr.json":                      ("MuSR",                                       "accuracy",                                       0.4),
+    "niah.json":                      ("niah",                                       "target_context_length_10000_accuracy",           5.0),
+    "onet-m6.json":                   ("thai-onet-m6-exam",                          "accuracy",                                       0.4),
+    "paws.json":                      ("paws",                                       "accuracy",                                       0.8),
+    "personality-BFI.json":           ("bfi_dc398081fd7520dab7af7028dd830d84",       "Extraversion",                                   0.725),
+    "personality-TRAIT.json":         ("personality_TRAIT",                          "Openness",                                       0.5955955955955956),
+    "piqa.json":                      ("piqa",                                       "accuracy",                                       0.8),
+    "pre-flight.json":                ("pre-flight-06",                              "accuracy",                                       0.8),
+    "pubmedqa.json":                  ("PubMedQA",                                   "accuracy",                                       0.2),
+    "race-h.json":                    ("race",                                       "accuracy",                                       0.8),
+    "sad-facts-human-defaults.json":  ("sad_facts_human_defaults",                   "accuracy",                                       0.4),
+    "sad-facts-llms.json":            ("sad_facts_llms",                             "accuracy",                                       0.8),
+    "sad-influence.json":             ("sad_influence",                              "accuracy",                                       0.6),
+    "sad-stages-full.json":           ("sad_stages_full",                            "accuracy",                                       0.2),
+    "sad-stages-oversight.json":      ("sad_stages_oversight",                       "accuracy",                                       0.3),
+    "scicode.json":                   ("problems_excl_dev",                          "inspect_evals/percentage_main_problems_solved",  0.0),
+    "sec-qa-v1.json":                 ("secqa",                                      "accuracy",                                       1.0),
+    "sec-qa-v2.json":                 ("secqa",                                      "accuracy",                                       1.0),
+    "sevenllm-mcq-en.json":           ("sevenllm_c2388953e215061b1324c268e3c108a1", "accuracy",                                       0.0),
+}
+
+
 def test_many():
     adapter = InspectAIAdapter()
     metadata_args = {
@@ -306,6 +360,19 @@ def test_many():
         'evaluator_relationship': EvaluatorRelationship.first_party,
     }
 
-    for inspect_eval_path in (Path(__file__).parent / Path("data/inspect/inspect_shortened/")).glob("*.json"):
+    fixture_dir = Path(__file__).parent / "data/inspect/inspect_shortened"
+    for inspect_eval_path in sorted(fixture_dir.glob("*.json")):
         converted_eval = _load_eval(adapter, inspect_eval_path.resolve(), metadata_args)
         assert converted_eval.detailed_evaluation_results is not None
+
+        assert converted_eval.model_info.id == 'Qwen/Qwen2.5-7B-Instruct'
+        assert converted_eval.model_info.developer == 'Qwen'
+
+        expected = _INSPECT_SHORTENED_EXPECTATIONS.get(inspect_eval_path.name)
+        assert expected is not None, f"No expectations defined for {inspect_eval_path.name}"
+
+        expected_dataset_name, expected_eval_description, expected_score = expected
+        result = converted_eval.evaluation_results[0]
+        assert result.source_data.dataset_name == expected_dataset_name, inspect_eval_path.name
+        assert result.metric_config.evaluation_description == expected_eval_description, inspect_eval_path.name
+        assert result.score_details.score == expected_score, inspect_eval_path.name
